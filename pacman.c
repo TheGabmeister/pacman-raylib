@@ -32,7 +32,7 @@ Pacman InitPacman(float x, float y)
     return p;
 }
 Pacman pacman;
-float wallOffset = 2.0f; // Distance between Pacman and wall before colliding
+Vector2 desiredDirection = {0,0};
 
 
 #define MAZE_ROWS 31
@@ -126,40 +126,17 @@ static void UpdateDrawFrame(void)
     //UpdateMusicStream(music);       
     
     // Keyboard input for Pacman movement
-    if (IsKeyDown(KEY_RIGHT)) pacman.direction = (Vector2){ 1, 0 };
-    else if (IsKeyDown(KEY_LEFT)) pacman.direction = (Vector2){ -1, 0 };
-    else if (IsKeyDown(KEY_UP)) pacman.direction = (Vector2) { 0, -1 };
-    else if (IsKeyDown(KEY_DOWN)) pacman.direction = (Vector2) { 0, 1 };
+    if (IsKeyDown(KEY_RIGHT)) desiredDirection = (Vector2){ 1, 0 };
+    else if (IsKeyDown(KEY_LEFT)) desiredDirection = (Vector2){ -1, 0 };
+    else if (IsKeyDown(KEY_UP)) desiredDirection = (Vector2) { 0, -1 };
+    else if (IsKeyDown(KEY_DOWN)) desiredDirection = (Vector2) { 0, 1 };
 
-    // Calculate next position
-    Vector2 nextPos = {
-        pacman.position.x + pacman.direction.x * pacman.speed,
-        pacman.position.y + pacman.direction.y * pacman.speed
-    };
+    // insert code
+    pacman.direction = desiredDirection;
 
-    // Calculate Pacman's bounding box after the move
-float left   = nextPos.x - pacman.radius;
-float right  = nextPos.x + pacman.radius;
-float top    = nextPos.y - pacman.radius;
-float bottom = nextPos.y + pacman.radius;
-
-// Convert bounding box corners to tile coordinates
-int leftCol   = (int)(left / TILE_SIZE);
-int rightCol  = (int)(right / TILE_SIZE);
-int topRow    = (int)(top / TILE_SIZE);
-int bottomRow = (int)(bottom / TILE_SIZE);
-
-// Check all four corners for wall collision
-bool collision =
-    (maze[topRow][leftCol]    == 1) ||
-    (maze[topRow][rightCol]   == 1) ||
-    (maze[bottomRow][leftCol] == 1) ||
-    (maze[bottomRow][rightCol]== 1);
-
-if (!collision)
-{
-    pacman.position = nextPos;
-}
+    // Update Pacman's position
+    pacman.position.x += pacman.direction.x * pacman.speed;
+    pacman.position.y += pacman.direction.y * pacman.speed;
 
     // Draw
     //----------------------------------------------------------------------------------
