@@ -131,12 +131,27 @@ static void UpdateDrawFrame(void)
     else if (IsKeyDown(KEY_UP)) desiredDirection = (Vector2) { 0, -1 };
     else if (IsKeyDown(KEY_DOWN)) desiredDirection = (Vector2) { 0, 1 };
 
-    // insert code
     pacman.direction = desiredDirection;
 
-    // Update Pacman's position
-    pacman.position.x += pacman.direction.x * pacman.speed;
-    pacman.position.y += pacman.direction.y * pacman.speed;
+    // Calculate next position
+    Vector2 nextPos = {
+        pacman.position.x + pacman.direction.x * pacman.speed,
+        pacman.position.y + pacman.direction.y * pacman.speed
+    };
+
+    // Convert next position to maze tile coordinates
+    int nextCol = (int)((nextPos.x + pacman.radius*pacman.direction.x) / TILE_SIZE );
+    int nextRow = (int)((nextPos.y + pacman.radius*pacman.direction.y) / TILE_SIZE );
+
+    // Check bounds
+    if (nextRow >= 0 && nextRow < MAZE_ROWS && nextCol >= 0 && nextCol < MAZE_COLS)
+    {
+        // Only move if next tile is not a wall
+        if (maze[nextRow][nextCol] != 1)
+        {
+            pacman.position = nextPos;
+        }
+    }
 
     // Draw
     //----------------------------------------------------------------------------------
