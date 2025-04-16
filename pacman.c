@@ -28,7 +28,7 @@ Pacman InitPacman(float x, float y)
     p.position = (Vector2){ x, y };
     p.direction = (Vector2){ 0, 0 };
     p.speed = 2.0f;
-    p.radius = 10.0f;
+    p.radius = 8.0f;
     return p;
 }
 Pacman pacman;
@@ -123,7 +123,7 @@ static void UpdateDrawFrame(void)
 {
     // Update
     //----------------------------------------------------------------------------------
-    //UpdateMusicStream(music);       // NOTE: Music keeps playing between screens
+    //UpdateMusicStream(music);       
     
     // Keyboard input for Pacman movement
     if (IsKeyDown(KEY_RIGHT)) pacman.direction = (Vector2){ 1, 0 };
@@ -137,19 +137,29 @@ static void UpdateDrawFrame(void)
         pacman.position.y + pacman.direction.y * pacman.speed
     };
 
-    // Convert next position to maze tile coordinates
-    int nextCol = (int)((nextPos.x + pacman.radius*pacman.direction.x) / TILE_SIZE );
-    int nextRow = (int)((nextPos.y + pacman.radius*pacman.direction.y) / TILE_SIZE );
+    // Calculate Pacman's bounding box after the move
+float left   = nextPos.x - pacman.radius;
+float right  = nextPos.x + pacman.radius;
+float top    = nextPos.y - pacman.radius;
+float bottom = nextPos.y + pacman.radius;
 
-    // Check bounds
-    if (nextRow >= 0 && nextRow < MAZE_ROWS && nextCol >= 0 && nextCol < MAZE_COLS)
-    {
-        // Only move if next tile is not a wall
-        if (maze[nextRow][nextCol] != 1)
-        {
-            pacman.position = nextPos;
-        }
-    }
+// Convert bounding box corners to tile coordinates
+int leftCol   = (int)(left / TILE_SIZE);
+int rightCol  = (int)(right / TILE_SIZE);
+int topRow    = (int)(top / TILE_SIZE);
+int bottomRow = (int)(bottom / TILE_SIZE);
+
+// Check all four corners for wall collision
+bool collision =
+    (maze[topRow][leftCol]    == 1) ||
+    (maze[topRow][rightCol]   == 1) ||
+    (maze[bottomRow][leftCol] == 1) ||
+    (maze[bottomRow][rightCol]== 1);
+
+if (!collision)
+{
+    pacman.position = nextPos;
+}
 
     // Draw
     //----------------------------------------------------------------------------------
