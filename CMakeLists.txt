@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24...3.30)
-project(raylib-game-template)
+project(pacman)
 
 include(FetchContent)
 
@@ -19,7 +19,6 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(raylib)
 
 add_executable(${PROJECT_NAME} pacman.c)
-add_subdirectory(src)
 
 target_link_libraries(${PROJECT_NAME} raylib)
 
