@@ -34,7 +34,6 @@ Pacman InitPacman(float x, float y)
 }
 Pacman pacman;
 Vector2 desiredDirection = {0,0};
-bool allowChangeDirection = false;
 
 #define MAZE_ROWS 31
 #define MAZE_COLS 28
@@ -85,7 +84,12 @@ int main(void)
 
     InitAudioDevice();      // Initialize audio device
 
-    pacman = InitPacman(screenWidth / 2.0f, screenHeight / 2.0f -100);
+    pacman = InitPacman(
+        20 * TILE_SIZE + TILE_SIZE /2, 
+        20 * TILE_SIZE + TILE_SIZE /2
+    );
+
+    // code 
     
     // Load global data (assets that must be available in all screens, i.e. font)
     font = LoadFont("resources/mecha.png");
@@ -127,14 +131,10 @@ static void UpdateDrawFrame(void)
     //UpdateMusicStream(music);       
     
     // Keyboard input for Pacman movement
-    if (IsKeyDown(KEY_RIGHT)) pacman.direction = (Vector2){ 1, 0 };
-    else if (IsKeyDown(KEY_LEFT)) pacman.direction = (Vector2){ -1, 0 };
-    else if (IsKeyDown(KEY_UP)) pacman.direction = (Vector2) { 0, -1 };
-    else if (IsKeyDown(KEY_DOWN)) pacman.direction = (Vector2) { 0, 1 };
-
-    // Update Pacman's position
-    pacman.position.x += pacman.direction.x * pacman.speed;
-    pacman.position.y += pacman.direction.y * pacman.speed;
+    if (IsKeyDown(KEY_RIGHT)) desiredDirection = (Vector2){ 1, 0 };
+    else if (IsKeyDown(KEY_LEFT)) desiredDirection = (Vector2){ -1, 0 };
+    else if (IsKeyDown(KEY_UP)) desiredDirection = (Vector2) { 0, -1 };
+    else if (IsKeyDown(KEY_DOWN)) desiredDirection = (Vector2) { 0, 1 };
 
     Vector2 pacmanGridPos = {
         (int)(pacman.position.x / TILE_SIZE),
@@ -153,7 +153,15 @@ static void UpdateDrawFrame(void)
         (pacman.position.y - cellCenter.y) * (pacman.position.y - cellCenter.y)
     );
 
-    
+    if(distToCenter <= 2.0)
+    {
+        //
+        pacman.direction = desiredDirection;
+    }
+
+    // Update Pacman's position
+    pacman.position.x += pacman.direction.x * pacman.speed;
+    pacman.position.y += pacman.direction.y * pacman.speed;
 
     // Draw
     //----------------------------------------------------------------------------------
