@@ -243,14 +243,14 @@ static void UpdateDrawFrame(void)
     DrawCircleV(pacman.position, pacman.radius, YELLOW);
 
     // For debugging Pacman's position in the grid
-    if (distToCenter <= 2.0)
+    /*if (distToCenter <= 2.0)
     {
         DrawRectangle((int)pacmanGridPos.x * TILE_SIZE, (int)pacmanGridPos.y * TILE_SIZE, TILE_SIZE, TILE_SIZE, RED);
     }
     else
     {
         DrawRectangle((int)pacmanGridPos.x * TILE_SIZE, (int)pacmanGridPos.y * TILE_SIZE, TILE_SIZE, TILE_SIZE, YELLOW);
-    }
+    }*/
     
     // For debugging:
     // DrawText(TextFormat("Dist: %.2f", distToCenter), 10, 10, 20, WHITE);
