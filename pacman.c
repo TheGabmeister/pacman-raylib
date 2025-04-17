@@ -261,32 +261,78 @@ void UpdateGhosts()
     const float CHASE_DISTANCE = 200.0f; // Only chase if Pacman is within 200 pixels
 
     // Update Ghosts
-    for (int i = 0; i < GHOST_COUNT; i++) {
+    for (int i = 0; i < GHOST_COUNT; i++) 
+    {
+        // Get ghost's grid position
+        Vector2 ghostGridPos = {
+            (int)(ghosts[i].position.x / TILE_SIZE),
+            (int)(ghosts[i].position.y / TILE_SIZE)
+        };
+
+        // Calculate center of current grid cell
+        Vector2 cellCenter = {
+            ghostGridPos.x * TILE_SIZE + TILE_SIZE / 2.0f,
+            ghostGridPos.y * TILE_SIZE + TILE_SIZE / 2.0f
+        };
+
+        // Calculate distance from ghost to center of grid cell
+        float distToCenter = sqrtf(
+            (ghosts[i].position.x - cellCenter.x) * (ghosts[i].position.x - cellCenter.x) +
+            (ghosts[i].position.y - cellCenter.y) * (ghosts[i].position.y - cellCenter.y)
+        );
+
+        const float CHASE_DISTANCE = 200.0f;
         Vector2 diff = {
             pacman.position.x - ghosts[i].position.x,
             pacman.position.y - ghosts[i].position.y
         };
         float distance = sqrtf(diff.x * diff.x + diff.y * diff.y);
 
-        if (distance <= CHASE_DISTANCE) {
-            // Choose direction with greatest distance (simple AI)
-            if (fabs(diff.x) > fabs(diff.y)) {
-                ghosts[i].direction = (Vector2){ (diff.x > 0) ? 1 : -1, 0 };
+        if (distToCenter <= 2.0f) {
+            // Only pick a new direction when at the center of a tile
+            Vector2 newDir = ghosts[i].direction;
+
+            if (distance <= CHASE_DISTANCE) {
+                // Choose direction with greatest distance (simple AI)
+                if (fabs(diff.x) > fabs(diff.y)) {
+                    newDir = (Vector2){ (diff.x > 0) ? 1 : -1, 0 };
+                }
+                else {
+                    newDir = (Vector2){ 0, (diff.y > 0) ? 1 : -1 };
+                }
+            } else {
+                // Move in a random direction if Pacman is too far
+                Vector2 possibleDirs[4] = { {1,0}, {-1,0}, {0,1}, {0,-1} };
+                int validDirs[4] = {0};
+                int validCount = 0;
+                // Check which directions are valid (not a wall)
+                for (int d = 0; d < 4; d++) {
+                    int testRow = (int)ghostGridPos.y + (int)possibleDirs[d].y;
+                    int testCol = (int)ghostGridPos.x + (int)possibleDirs[d].x;
+                    if (testRow >= 0 && testRow < MAZE_ROWS && testCol >= 0 && testCol < MAZE_COLS && maze[testRow][testCol] != 1) {
+                        validDirs[validCount++] = d;
+                    }
+                }
+                if (validCount > 0) {
+                    int choice = GetRandomValue(0, validCount - 1);
+                    newDir = possibleDirs[validDirs[choice]];
+                } else {
+                    newDir = (Vector2){ 0, 0 }; // No valid moves
+                }
             }
-            else {
-                ghosts[i].direction = (Vector2){ 0, (diff.y > 0) ? 1 : -1 };
+
+            // Check if the next cell in the chosen direction is a wall
+            int nextRow = (int)ghostGridPos.y + (int)newDir.y;
+            int nextCol = (int)ghostGridPos.x + (int)newDir.x;
+            if (nextRow >= 0 && nextRow < MAZE_ROWS && nextCol >= 0 && nextCol < MAZE_COLS && maze[nextRow][nextCol] != 1) {
+                ghosts[i].direction = newDir;
+                ghosts[i].position = cellCenter; // Snap to center
+            } else {
+                ghosts[i].direction = (Vector2){ 0, 0 }; // Stop if wall or out of bounds
             }
-        } else {
-            ghosts[i].direction = (Vector2){ 0, 0 }; // Stop if Pacman is too far
         }
 
-        // Check for walls
-        int nextRow = (int)((ghosts[i].position.y + ghosts[i].direction.y * ghosts[i].speed) / TILE_SIZE);
-        int nextCol = (int)((ghosts[i].position.x + ghosts[i].direction.x * ghosts[i].speed) / TILE_SIZE);
-        if (maze[nextRow][nextCol] == 1) {
-            ghosts[i].direction = (Vector2){ 0, 0 }; // Stop if wall
-        }
-        // Move ghost
+        // Move ghost along the grid
         ghosts[i].position.x += ghosts[i].direction.x * ghosts[i].speed;
         ghosts[i].position.y += ghosts[i].direction.y * ghosts[i].speed;
     }
