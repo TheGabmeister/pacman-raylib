@@ -155,8 +155,29 @@ static void UpdateDrawFrame(void)
 
     if(distToCenter <= 2.0)
     {
-        //
-        pacman.direction = desiredDirection;
+        // Raycast: check if the next cell in the desired direction is a wall
+        int nextRow = (int)pacmanGridPos.y + (int)desiredDirection.y;
+        int nextCol = (int)pacmanGridPos.x + (int)desiredDirection.x;
+        if (nextRow >= 0 && nextRow < MAZE_ROWS && nextCol >= 0 && nextCol < MAZE_COLS)
+        {
+            if (maze[nextRow][nextCol] != 1)
+            {
+                pacman.direction = desiredDirection;
+            }
+            else
+            {
+                // Only stop if the wall is directly in front of Pacman's current direction
+                if ((int)desiredDirection.x == (int)pacman.direction.x && (int)desiredDirection.y == (int)pacman.direction.y)
+                {
+                    pacman.direction = (Vector2){0, 0};
+                }
+                // Otherwise, keep moving in the current direction
+            }
+        }
+        else
+        {
+            pacman.direction = (Vector2){0, 0}; // Stop if out of bounds
+        }
     }
 
     // Update Pacman's position
