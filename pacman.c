@@ -96,6 +96,7 @@ void InitGhosts() {
 
 // Local Functions Declaration
 static void UpdateDrawFrame(void);          // Update and draw one frame
+void UpdateGhosts();
 
 int main(void)
 {
@@ -206,28 +207,7 @@ static void UpdateDrawFrame(void)
     pacman.position.x += pacman.direction.x * pacman.speed;
     pacman.position.y += pacman.direction.y * pacman.speed;
 
-    // Update Ghosts
-    for (int i = 0; i < GHOST_COUNT; i++) {
-        Vector2 diff = {
-            pacman.position.x - ghosts[i].position.x,
-            pacman.position.y - ghosts[i].position.y
-        };
-        // Choose direction with greatest distance (simple AI)
-        if (fabs(diff.x) > fabs(diff.y)) {
-            ghosts[i].direction = (Vector2){ (diff.x > 0) ? 1 : -1, 0 };
-        } else {
-            ghosts[i].direction = (Vector2){ 0, (diff.y > 0) ? 1 : -1 };
-        }
-        // Check for walls
-        int nextRow = (int)((ghosts[i].position.y + ghosts[i].direction.y * ghosts[i].speed) / TILE_SIZE);
-        int nextCol = (int)((ghosts[i].position.x + ghosts[i].direction.x * ghosts[i].speed) / TILE_SIZE);
-        if (maze[nextRow][nextCol] == 1) {
-            ghosts[i].direction = (Vector2){ 0, 0 }; // Stop if wall
-        }
-        // Move ghost
-        ghosts[i].position.x += ghosts[i].direction.x * ghosts[i].speed;
-        ghosts[i].position.y += ghosts[i].direction.y * ghosts[i].speed;
-    }
+    UpdateGhosts();
 
 
     // Draw
@@ -274,4 +254,40 @@ static void UpdateDrawFrame(void)
 
     EndDrawing();
     //----------------------------------------------------------------------------------
+}
+
+void UpdateGhosts()
+{
+    const float CHASE_DISTANCE = 200.0f; // Only chase if Pacman is within 200 pixels
+
+    // Update Ghosts
+    for (int i = 0; i < GHOST_COUNT; i++) {
+        Vector2 diff = {
+            pacman.position.x - ghosts[i].position.x,
+            pacman.position.y - ghosts[i].position.y
+        };
+        float distance = sqrtf(diff.x * diff.x + diff.y * diff.y);
+
+        if (distance <= CHASE_DISTANCE) {
+            // Choose direction with greatest distance (simple AI)
+            if (fabs(diff.x) > fabs(diff.y)) {
+                ghosts[i].direction = (Vector2){ (diff.x > 0) ? 1 : -1, 0 };
+            }
+            else {
+                ghosts[i].direction = (Vector2){ 0, (diff.y > 0) ? 1 : -1 };
+            }
+        } else {
+            ghosts[i].direction = (Vector2){ 0, 0 }; // Stop if Pacman is too far
+        }
+
+        // Check for walls
+        int nextRow = (int)((ghosts[i].position.y + ghosts[i].direction.y * ghosts[i].speed) / TILE_SIZE);
+        int nextCol = (int)((ghosts[i].position.x + ghosts[i].direction.x * ghosts[i].speed) / TILE_SIZE);
+        if (maze[nextRow][nextCol] == 1) {
+            ghosts[i].direction = (Vector2){ 0, 0 }; // Stop if wall
+        }
+        // Move ghost
+        ghosts[i].position.x += ghosts[i].direction.x * ghosts[i].speed;
+        ghosts[i].position.y += ghosts[i].direction.y * ghosts[i].speed;
+    }
 }
