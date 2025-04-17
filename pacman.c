@@ -10,17 +10,24 @@ Font font = { 0 };
 Music music = { 0 };
 Sound fxCoin = { 0 };
 
-
 // Local Variables Definition (local to this module)
 static const int screenWidth = 800;
 static const int screenHeight = 1000;
 
 typedef struct {
-    Vector2 position;   // Pacman's position in pixels
+    Vector2 position;   
     Vector2 direction;  // Current movement direction
     float speed;        // Movement speed (pixels per frame)
     float radius;       // For drawing Pacman
 } Pacman;
+
+typedef struct {
+    Vector2 position;
+    Vector2 direction;
+    float speed;
+    float radius;
+    Color color;
+} Ghost;
 
 // Initialize Pacman at a given position
 Pacman InitPacman(float x, float y)
@@ -73,6 +80,20 @@ int maze[MAZE_ROWS][MAZE_COLS] = {
     {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
 };
 
+#define GHOST_COUNT 4
+Ghost ghosts[GHOST_COUNT];
+
+void InitGhosts() {
+    Color ghostColors[GHOST_COUNT] = { RED, GREEN, BLUE, MAGENTA };
+    for (int i = 0; i < GHOST_COUNT; i++) {
+        ghosts[i].position = (Vector2){ 14 * TILE_SIZE + TILE_SIZE/2, 14 * TILE_SIZE + TILE_SIZE/2 + i*10 };
+        ghosts[i].direction = (Vector2){ 0, -1 };
+        ghosts[i].speed = 3.0f;
+        ghosts[i].radius = 16.0f;
+        ghosts[i].color = ghostColors[i];
+    }
+}
+
 // Local Functions Declaration
 static void UpdateDrawFrame(void);          // Update and draw one frame
 
@@ -88,10 +109,9 @@ int main(void)
         20 * TILE_SIZE + TILE_SIZE /2, 
         20 * TILE_SIZE + TILE_SIZE /2
     );
-
-    // code 
     
-    // Load global data (assets that must be available in all screens, i.e. font)
+    InitGhosts();
+
     font = LoadFont("resources/mecha.png");
     //music = LoadMusicStream("resources/ambient.ogg"); // TODO: Load music
     fxCoin = LoadSound("resources/coin.wav");
@@ -117,13 +137,11 @@ int main(void)
     UnloadSound(fxCoin);
 
     CloseAudioDevice();     // Close audio context
-
     CloseWindow();          // Close window and OpenGL context
 
     return 0;
 }
 
-// Update and draw game frame
 static void UpdateDrawFrame(void)
 {
     // Update
@@ -188,12 +206,34 @@ static void UpdateDrawFrame(void)
     pacman.position.x += pacman.direction.x * pacman.speed;
     pacman.position.y += pacman.direction.y * pacman.speed;
 
+    // Update Ghosts
+    for (int i = 0; i < GHOST_COUNT; i++) {
+        Vector2 diff = {
+            pacman.position.x - ghosts[i].position.x,
+            pacman.position.y - ghosts[i].position.y
+        };
+        // Choose direction with greatest distance (simple AI)
+        if (fabs(diff.x) > fabs(diff.y)) {
+            ghosts[i].direction = (Vector2){ (diff.x > 0) ? 1 : -1, 0 };
+        } else {
+            ghosts[i].direction = (Vector2){ 0, (diff.y > 0) ? 1 : -1 };
+        }
+        // Check for walls
+        int nextRow = (int)((ghosts[i].position.y + ghosts[i].direction.y * ghosts[i].speed) / TILE_SIZE);
+        int nextCol = (int)((ghosts[i].position.x + ghosts[i].direction.x * ghosts[i].speed) / TILE_SIZE);
+        if (maze[nextRow][nextCol] == 1) {
+            ghosts[i].direction = (Vector2){ 0, 0 }; // Stop if wall
+        }
+        // Move ghost
+        ghosts[i].position.x += ghosts[i].direction.x * ghosts[i].speed;
+        ghosts[i].position.y += ghosts[i].direction.y * ghosts[i].speed;
+    }
+
+
     // Draw
     //----------------------------------------------------------------------------------
     BeginDrawing();
     ClearBackground(BLACK);
-
-    
 
     // Draw Maze
     for (int row = 0; row < MAZE_ROWS; row++)
@@ -203,7 +243,7 @@ static void UpdateDrawFrame(void)
             int x = col * TILE_SIZE;
             int y = row * TILE_SIZE;
             if (maze[row][col] == 1)
-                DrawRectangle(x, y, TILE_SIZE, TILE_SIZE, BLUE);
+                DrawRectangle(x, y, TILE_SIZE, TILE_SIZE, DARKGRAY);
             else if (maze[row][col] == 2)
                 DrawCircle(x + TILE_SIZE/2, y + TILE_SIZE/2, 4, WHITE);
         }
@@ -222,14 +262,16 @@ static void UpdateDrawFrame(void)
         DrawRectangle((int)pacmanGridPos.x * TILE_SIZE, (int)pacmanGridPos.y * TILE_SIZE, TILE_SIZE, TILE_SIZE, YELLOW);
     }
     
-    
-
-    // Optionally, for debugging:
-     DrawText(TextFormat("Dist: %.2f", distToCenter), 10, 10, 20, WHITE);
+    // For debugging:
+    // DrawText(TextFormat("Dist: %.2f", distToCenter), 10, 10, 20, WHITE);
      
+    // Draw Ghosts
+    for (int i = 0; i < GHOST_COUNT; i++) {
+        DrawCircleV(ghosts[i].position, ghosts[i].radius, ghosts[i].color);
+    }
+
     //DrawFPS(10, 10);
 
     EndDrawing();
     //----------------------------------------------------------------------------------
 }
-
