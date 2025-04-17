@@ -1,4 +1,5 @@
 #include "raylib.h"
+#include "math.h"
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
@@ -33,7 +34,7 @@ Pacman InitPacman(float x, float y)
 }
 Pacman pacman;
 Vector2 desiredDirection = {0,0};
-
+bool allowChangeDirection = false;
 
 #define MAZE_ROWS 31
 #define MAZE_COLS 28
@@ -140,6 +141,20 @@ static void UpdateDrawFrame(void)
         (int)(pacman.position.y / TILE_SIZE)
     };
 
+    // Calculate center of current grid cell
+    Vector2 cellCenter = {
+        pacmanGridPos.x * TILE_SIZE + TILE_SIZE / 2.0f,
+        pacmanGridPos.y * TILE_SIZE + TILE_SIZE / 2.0f
+    };
+
+    // Calculate distance from Pacman to center of grid cell
+    float distToCenter = sqrtf(
+        (pacman.position.x - cellCenter.x) * (pacman.position.x - cellCenter.x) +
+        (pacman.position.y - cellCenter.y) * (pacman.position.y - cellCenter.y)
+    );
+
+    
+
     // Draw
     //----------------------------------------------------------------------------------
     BeginDrawing();
@@ -165,8 +180,20 @@ static void UpdateDrawFrame(void)
     DrawCircleV(pacman.position, pacman.radius, YELLOW);
 
     // For debugging Pacman's position in the grid
-    DrawRectangle((int)pacmanGridPos.x * TILE_SIZE, (int)pacmanGridPos.y * TILE_SIZE,TILE_SIZE, TILE_SIZE, RED);
+    if (distToCenter <= 5.0)
+    {
+        DrawRectangle((int)pacmanGridPos.x * TILE_SIZE, (int)pacmanGridPos.y * TILE_SIZE, TILE_SIZE, TILE_SIZE, RED);
+    }
+    else
+    {
+        DrawRectangle((int)pacmanGridPos.x * TILE_SIZE, (int)pacmanGridPos.y * TILE_SIZE, TILE_SIZE, TILE_SIZE, YELLOW);
+    }
+    
+    
 
+    // Optionally, for debugging:
+     DrawText(TextFormat("Dist: %.2f", distToCenter), 10, 10, 20, WHITE);
+     
     //DrawFPS(10, 10);
 
     EndDrawing();
