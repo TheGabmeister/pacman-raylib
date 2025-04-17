@@ -28,7 +28,7 @@ Pacman InitPacman(float x, float y)
     Pacman p;
     p.position = (Vector2){ x, y };
     p.direction = (Vector2){ 0, 0 };
-    p.speed = 2.0f;
+    p.speed = 4.0f;
     p.radius = 16.0f;
     return p;
 }
@@ -165,6 +165,7 @@ static void UpdateDrawFrame(void)
             if (maze[nextRow][nextCol] != 1)
             {
                 pacman.direction = desiredDirection;
+                pacman.position = cellCenter;
             }
             else
             {
@@ -212,7 +213,7 @@ static void UpdateDrawFrame(void)
     DrawCircleV(pacman.position, pacman.radius, YELLOW);
 
     // For debugging Pacman's position in the grid
-    if (distToCenter <= 5.0)
+    if (distToCenter <= 2.0)
     {
         DrawRectangle((int)pacmanGridPos.x * TILE_SIZE, (int)pacmanGridPos.y * TILE_SIZE, TILE_SIZE, TILE_SIZE, RED);
     }
