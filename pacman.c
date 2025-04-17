@@ -160,6 +160,13 @@ static void UpdateDrawFrame(void)
         (int)(pacman.position.y / TILE_SIZE)
     };
 
+    if (pacmanGridPos.y >= 0 && pacmanGridPos.y < MAZE_ROWS && pacmanGridPos.x >= 0 && pacmanGridPos.x < MAZE_COLS) {
+        if (maze[(int)pacmanGridPos.y][(int)pacmanGridPos.x] == 2) {
+            maze[(int)pacmanGridPos.y][(int)pacmanGridPos.x] = 0; // Remove pellet
+            PlaySound(fxCoin);        // Play sound effect
+        }
+    }
+
     // Calculate center of current grid cell
     Vector2 cellCenter = {
         pacmanGridPos.x * TILE_SIZE + TILE_SIZE / 2.0f,
@@ -206,6 +213,9 @@ static void UpdateDrawFrame(void)
     // Update Pacman's position
     pacman.position.x += pacman.direction.x * pacman.speed;
     pacman.position.y += pacman.direction.y * pacman.speed;
+
+
+
 
     UpdateGhosts();
 
@@ -293,27 +303,72 @@ void UpdateGhosts()
             Vector2 newDir = ghosts[i].direction;
 
             if (distance <= CHASE_DISTANCE) {
-                // Choose direction with greatest distance (simple AI)
-                if (fabs(diff.x) > fabs(diff.y)) {
-                    newDir = (Vector2){ (diff.x > 0) ? 1 : -1, 0 };
+                // --- BFS shortest path to Pacman ---
+                typedef struct { int x, y; } Point;
+                Point queue[MAZE_ROWS * MAZE_COLS];
+                int front = 0, back = 0;
+                int visited[MAZE_ROWS][MAZE_COLS] = {0};
+                Point prev[MAZE_ROWS][MAZE_COLS] = {0};
+
+                int startX = (int)ghostGridPos.x, startY = (int)ghostGridPos.y;
+                int goalX = (int)(pacman.position.x / TILE_SIZE), goalY = (int)(pacman.position.y / TILE_SIZE);
+
+                queue[back++] = (Point){startX, startY};
+                visited[startY][startX] = 1;
+
+                int found = 0;
+                while (front < back && !found) {
+                    Point cur = queue[front++];
+                    Point dirs[4] = { {1,0}, {-1,0}, {0,1}, {0,-1} };
+                    for (int d = 0; d < 4; d++) {
+                        int nx = cur.x + dirs[d].x, ny = cur.y + dirs[d].y;
+                        if (nx >= 0 && nx < MAZE_COLS && ny >= 0 && ny < MAZE_ROWS &&
+                            !visited[ny][nx] && maze[ny][nx] != 1) {
+                            queue[back++] = (Point){nx, ny};
+                            visited[ny][nx] = 1;
+                            prev[ny][nx] = cur;
+                            if (nx == goalX && ny == goalY) { found = 1; break; }
+                        }
+                    }
                 }
-                else {
-                    newDir = (Vector2){ 0, (diff.y > 0) ? 1 : -1 };
+                // Trace back from Pacman to ghost to find next step
+                if (visited[goalY][goalX]) {
+                    int cx = goalX, cy = goalY;
+                    Point before = {startX, startY};
+                    while (!(prev[cy][cx].x == startX && prev[cy][cx].y == startY)) {
+                        Point p = prev[cy][cx];
+                        cx = p.x; cy = p.y;
+                    }
+                    int dx = cx - startX, dy = cy - startY;
+                    newDir = (Vector2){ dx, dy };
+                } else {
+                    newDir = ghosts[i].direction; // fallback: keep current direction
                 }
             } else {
-                // Move in a random direction if Pacman is too far
+                // Move in a less random direction if Pacman is too far
                 Vector2 possibleDirs[4] = { {1,0}, {-1,0}, {0,1}, {0,-1} };
                 int validDirs[4] = {0};
                 int validCount = 0;
+                int currentDirIndex = -1;
+
                 // Check which directions are valid (not a wall)
                 for (int d = 0; d < 4; d++) {
                     int testRow = (int)ghostGridPos.y + (int)possibleDirs[d].y;
                     int testCol = (int)ghostGridPos.x + (int)possibleDirs[d].x;
                     if (testRow >= 0 && testRow < MAZE_ROWS && testCol >= 0 && testCol < MAZE_COLS && maze[testRow][testCol] != 1) {
                         validDirs[validCount++] = d;
+                        // Check if this is the current direction
+                        if ((int)ghosts[i].direction.x == (int)possibleDirs[d].x && (int)ghosts[i].direction.y == (int)possibleDirs[d].y) {
+                            currentDirIndex = d;
+                        }
                     }
                 }
-                if (validCount > 0) {
+
+                if (currentDirIndex != -1) {
+                    // Continue in the same direction if possible
+                    newDir = possibleDirs[currentDirIndex];
+                } else if (validCount > 0) {
+                    // Otherwise, pick a new direction (randomly, but less often)
                     int choice = GetRandomValue(0, validCount - 1);
                     newDir = possibleDirs[validDirs[choice]];
                 } else {
