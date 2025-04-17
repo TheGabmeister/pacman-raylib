@@ -27,7 +27,7 @@ Pacman InitPacman(float x, float y)
     Pacman p;
     p.position = (Vector2){ x, y };
     p.direction = (Vector2){ 0, 0 };
-    p.speed = 2.0f;
+    p.speed = 1.0f;
     p.radius = 8.0f;
     return p;
 }
@@ -126,32 +126,19 @@ static void UpdateDrawFrame(void)
     //UpdateMusicStream(music);       
     
     // Keyboard input for Pacman movement
-    if (IsKeyDown(KEY_RIGHT)) desiredDirection = (Vector2){ 1, 0 };
-    else if (IsKeyDown(KEY_LEFT)) desiredDirection = (Vector2){ -1, 0 };
-    else if (IsKeyDown(KEY_UP)) desiredDirection = (Vector2) { 0, -1 };
-    else if (IsKeyDown(KEY_DOWN)) desiredDirection = (Vector2) { 0, 1 };
+    if (IsKeyDown(KEY_RIGHT)) pacman.direction = (Vector2){ 1, 0 };
+    else if (IsKeyDown(KEY_LEFT)) pacman.direction = (Vector2){ -1, 0 };
+    else if (IsKeyDown(KEY_UP)) pacman.direction = (Vector2) { 0, -1 };
+    else if (IsKeyDown(KEY_DOWN)) pacman.direction = (Vector2) { 0, 1 };
 
-    pacman.direction = desiredDirection;
+    // Update Pacman's position
+    pacman.position.x += pacman.direction.x * pacman.speed;
+    pacman.position.y += pacman.direction.y * pacman.speed;
 
-    // Calculate next position
-    Vector2 nextPos = {
-        pacman.position.x + pacman.direction.x * pacman.speed,
-        pacman.position.y + pacman.direction.y * pacman.speed
+    Vector2 pacmanGridPos = {
+        (int)(pacman.position.x / TILE_SIZE),
+        (int)(pacman.position.y / TILE_SIZE)
     };
-
-    // Convert next position to maze tile coordinates
-    int nextCol = (int)((nextPos.x + pacman.radius*pacman.direction.x) / TILE_SIZE );
-    int nextRow = (int)((nextPos.y + pacman.radius*pacman.direction.y) / TILE_SIZE );
-
-    // Check bounds
-    if (nextRow >= 0 && nextRow < MAZE_ROWS && nextCol >= 0 && nextCol < MAZE_COLS)
-    {
-        // Only move if next tile is not a wall
-        if (maze[nextRow][nextCol] != 1)
-        {
-            pacman.position = nextPos;
-        }
-    }
 
     // Draw
     //----------------------------------------------------------------------------------
@@ -176,6 +163,9 @@ static void UpdateDrawFrame(void)
 
     // Draw Pacman as a yellow circle
     DrawCircleV(pacman.position, pacman.radius, YELLOW);
+
+    // For debugging Pacman's position in the grid
+    DrawRectangle((int)pacmanGridPos.x * TILE_SIZE, (int)pacmanGridPos.y * TILE_SIZE,TILE_SIZE, TILE_SIZE, RED);
 
     //DrawFPS(10, 10);
 
