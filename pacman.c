@@ -18,7 +18,8 @@ typedef struct {
     Vector2 position;   
     Vector2 direction;  // Current movement direction
     float speed;        // Movement speed (pixels per frame)
-    float radius;       // For drawing Pacman
+    float radius; 
+    Texture2D sprite;     // For drawing Pacman
 } Pacman;
 
 typedef struct {
@@ -37,10 +38,12 @@ Pacman InitPacman(float x, float y)
     p.direction = (Vector2){ 0, 0 };
     p.speed = 4.0f;
     p.radius = 16.0f;
+    p.sprite = LoadTexture("resources/pacman.png");
     return p;
 }
 Pacman pacman;
 Vector2 desiredDirection = {0,0};
+
 
 #define MAZE_ROWS 31
 #define MAZE_COLS 28
@@ -136,6 +139,7 @@ int main(void)
     UnloadFont(font);
     UnloadMusicStream(music);
     UnloadSound(fxCoin);
+    UnloadTexture(pacman.sprite); 
 
     CloseAudioDevice();     // Close audio context
     CloseWindow();          // Close window and OpenGL context
@@ -240,7 +244,18 @@ static void UpdateDrawFrame(void)
     }
 
     // Draw Pacman as a yellow circle
-    DrawCircleV(pacman.position, pacman.radius, YELLOW);
+    //DrawTexture(pacman.sprite, pacman.position.x, pacman.position.y, WHITE);
+    float scale = 0.3f;
+    DrawTextureEx(
+        pacman.sprite,
+        (Vector2){
+            pacman.position.x - (pacman.sprite.width * scale) / 2,
+            pacman.position.y - (pacman.sprite.height * scale) / 2
+        },
+        0.0f,
+        scale,
+        WHITE
+    );
 
     // For debugging Pacman's position in the grid
     /*if (distToCenter <= 2.0)
