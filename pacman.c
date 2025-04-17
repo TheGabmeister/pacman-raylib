@@ -12,8 +12,8 @@ Sound fxCoin = { 0 };
 
 
 // Local Variables Definition (local to this module)
-static const int screenWidth = 600;
-static const int screenHeight = 800;
+static const int screenWidth = 800;
+static const int screenHeight = 1000;
 
 typedef struct {
     Vector2 position;   // Pacman's position in pixels
@@ -28,8 +28,8 @@ Pacman InitPacman(float x, float y)
     Pacman p;
     p.position = (Vector2){ x, y };
     p.direction = (Vector2){ 0, 0 };
-    p.speed = 1.0f;
-    p.radius = 8.0f;
+    p.speed = 2.0f;
+    p.radius = 16.0f;
     return p;
 }
 Pacman pacman;
@@ -37,7 +37,7 @@ Vector2 desiredDirection = {0,0};
 
 #define MAZE_ROWS 31
 #define MAZE_COLS 28
-#define TILE_SIZE 20
+#define TILE_SIZE 28
 // 0 = empty, 1 = wall, 2 = pellet
 int maze[MAZE_ROWS][MAZE_COLS] = {
     {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
@@ -153,9 +153,11 @@ static void UpdateDrawFrame(void)
         (pacman.position.y - cellCenter.y) * (pacman.position.y - cellCenter.y)
     );
 
+    
+
     if(distToCenter <= 2.0)
     {
-        // Raycast: check if the next cell in the desired direction is a wall
+        // Check if the next cell in the desired direction is a wall
         int nextRow = (int)pacmanGridPos.y + (int)desiredDirection.y;
         int nextCol = (int)pacmanGridPos.x + (int)desiredDirection.x;
         if (nextRow >= 0 && nextRow < MAZE_ROWS && nextCol >= 0 && nextCol < MAZE_COLS)
@@ -174,6 +176,7 @@ static void UpdateDrawFrame(void)
                 // Otherwise, keep moving in the current direction
             }
         }
+
         else
         {
             pacman.direction = (Vector2){0, 0}; // Stop if out of bounds
