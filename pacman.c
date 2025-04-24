@@ -10,16 +10,15 @@ Font font = { 0 };
 Music music = { 0 };
 Sound fxCoin = { 0 };
 
-// Local Variables Definition (local to this module)
 static const int screenWidth = 800;
 static const int screenHeight = 1000;
 
 typedef struct {
     Vector2 position;   
-    Vector2 direction;  // Current movement direction
-    float speed;        // Movement speed (pixels per frame)
+    Vector2 direction;
+    float speed;
     float radius; 
-    Texture2D sprite;     // For drawing Pacman
+    Texture2D sprite;
 } Pacman;
 
 typedef struct {
@@ -30,7 +29,6 @@ typedef struct {
     Color color;
 } Ghost;
 
-// Initialize Pacman at a given position
 Pacman InitPacman(float x, float y)
 {
     Pacman p;
@@ -43,7 +41,6 @@ Pacman InitPacman(float x, float y)
 }
 Pacman pacman;
 Vector2 desiredDirection = {0,0};
-
 
 #define MAZE_ROWS 31
 #define MAZE_COLS 28
@@ -98,7 +95,7 @@ void InitGhosts() {
 }
 
 // Local Functions Declaration
-static void UpdateDrawFrame(void);          // Update and draw one frame
+static void UpdateDrawFrame(void);
 void UpdateGhosts();
 
 int main(void)
@@ -126,7 +123,7 @@ int main(void)
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
 #else
-    SetTargetFPS(60);       // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);
 
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
@@ -167,7 +164,7 @@ static void UpdateDrawFrame(void)
     if (pacmanGridPos.y >= 0 && pacmanGridPos.y < MAZE_ROWS && pacmanGridPos.x >= 0 && pacmanGridPos.x < MAZE_COLS) {
         if (maze[(int)pacmanGridPos.y][(int)pacmanGridPos.x] == 2) {
             maze[(int)pacmanGridPos.y][(int)pacmanGridPos.x] = 0; // Remove pellet
-            PlaySound(fxCoin);        // Play sound effect
+            PlaySound(fxCoin);
         }
     }
 
@@ -182,8 +179,6 @@ static void UpdateDrawFrame(void)
         (pacman.position.x - cellCenter.x) * (pacman.position.x - cellCenter.x) +
         (pacman.position.y - cellCenter.y) * (pacman.position.y - cellCenter.y)
     );
-
-    
 
     if(distToCenter <= 2.0)
     {
@@ -218,9 +213,6 @@ static void UpdateDrawFrame(void)
     pacman.position.x += pacman.direction.x * pacman.speed;
     pacman.position.y += pacman.direction.y * pacman.speed;
 
-
-
-
     UpdateGhosts();
 
 
@@ -243,17 +235,19 @@ static void UpdateDrawFrame(void)
         }
     }
 
-    // Draw Pacman as a yellow circle
-    //DrawTexture(pacman.sprite, pacman.position.x, pacman.position.y, WHITE);
     float scale = 0.3f;
-    DrawTextureEx(
+    float rotationAngle = atan2f(pacman.direction.y, pacman.direction.x) * (180.0f / PI);
+    if (rotationAngle < 0) {
+        rotationAngle += 360.0;
+    }
+
+    // Use DrawTexturePro to rotate the sprite along its center
+    DrawTexturePro(
         pacman.sprite,
-        (Vector2){
-            pacman.position.x - (pacman.sprite.width * scale) / 2,
-            pacman.position.y - (pacman.sprite.height * scale) / 2
-        },
-        0.0f,
-        scale,
+        (Rectangle) { 0, 0, pacman.sprite.width, pacman.sprite.height },
+        (Rectangle) { pacman.position.x, pacman.position.y, pacman.sprite.width* scale, pacman.sprite.height* scale }, 
+        (Vector2) { (pacman.sprite.width * scale) / 2, (pacman.sprite.height * scale) / 2 }, 
+        rotationAngle,
         WHITE
     );
 
