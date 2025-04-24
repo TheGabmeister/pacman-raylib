@@ -38,7 +38,7 @@ Pacman InitPacman(float x, float y)
     p.direction = (Vector2){ 0, 0 };
     p.speed = 4.0f;
     p.radius = 16.0f;
-    p.sprite = LoadTexture("resources/pacman.png");
+    p.sprite = LoadTexture(RESOURCES_PATH"/pacman.png");
     return p;
 }
 Pacman pacman;
